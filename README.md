@@ -4,15 +4,15 @@ This repo contains code for our MLHC 2022 paper [HiCu: Leveraging Hierarchy for 
 Setup
 -----
 Install the following packages to run the code in this repository:
-* gensim==4.1.2
-* nltk==3.5
-* numpy==1.18.1
-* pandas==1.0.0
-* scikit_learn==1.1.1
-* scipy==1.4.1
-* torch==1.7.1
-* tqdm==4.62.3
-* transformers==4.5.1
+* gensim
+* nltk
+* numpy
+* pandas
+* scikit_learn
+* scipy
+* torch
+* tqdm
+* transformers
 
 ```bash
 pip install -r requirements.txt

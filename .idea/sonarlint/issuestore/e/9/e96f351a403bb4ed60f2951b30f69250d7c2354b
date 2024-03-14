@@ -1,0 +1,36 @@
+
+Apython:S1172")Remove the unused function parameter "Y".(æÇ”Ã
+Fpython:S1172#")Remove the unused function parameter "Y".(¡…ºäüÿÿÿÿ
+fpython:S6730X"IReplace this deprecated "numpy" type alias with the builtin type "float".(Ô±áéûÿÿÿÿ
+\python:S6711]"DUse a "numpy.random.Generator" here instead of this legacy function.(¹ŸÍí
+Cpython:S1481­"%Remove the unused local variable "i".(£ýú¼þÿÿÿÿ
+Qpython:S1172õ"8Remove the unused function parameter "min_sentence_len".(‹¾œô
+Fpython:S1481€"(Remove the unused local variable "subj".(ýÝæžúÿÿÿÿ
+Kpython:S1481²"2Replace unused local variable "cur_subj" with "_".(©‡õÍ
+Epython:S1481Ö",Remove the unused local variable "cur_hadm".(í ÞŒ
+Epython:S1172¬",Remove the unused function parameter "args".(Ëƒ‹á
+<python:S125²"Remove this commented out code.(‡Ô¶¢øÿÿÿÿ
+cpython:S1854Á"JRemove this assignment to local variable 'ind2c'; the value is never used.(‹„×ó
+Jpython:S1172©",Remove the unused function parameter "args".(ï½Ùþÿÿÿÿ
+Mpython:S1481ª"/Replace unused local variable "ind2w" with "_".(ª®Ðñøÿÿÿÿ
+Mpython:S1481á"/Replace unused local variable "ind2w" with "_".(ª®Ðñøÿÿÿÿ
+Mpython:S1481á"/Replace unused local variable "w2ind" with "_".(ª®Ðñøÿÿÿÿ
+7python:S125‹"Remove this commented out code.(¦Í°Ø
+`python:S6730§"GReplace this deprecated "numpy" type alias with the builtin type "int".(úºÀí
+Epython:S1172å",Remove the unused function parameter "args".(¯Ð££
+Gpython:S1172å".Remove the unused function parameter "params".(¯Ð££
+5python:S6660¡"Use `not isinstance()` here.(´¢¾ÿ
+opython:S1542°"QRename function "_readString" to match the regular expression ^[a-z_][a-z0-9_]*$.(­Ûÿ‹úÿÿÿÿ
+<python:S125±"Remove this commented out code.(ÔÇéµýÿÿÿÿ
+6python:S125Ã"Remove this commented out code.(üì‹P
+ipython:S1542Ö"PRename function "_readFloat" to match the regular expression ^[a-z_][a-z0-9_]*$.(ýÄ€È
+=python:S1481ê"%Remove the unused local variable "j".(ÞìÔB
+Cpython:S1481å"%Remove the unused local variable "i".(Ó™¨•üÿÿÿÿ
+<python:S125ß"Remove this commented out code.(±À÷–ûÿÿÿÿ
+gpython:S6730ì"IReplace this deprecated "numpy" type alias with the builtin type "float".(»¨®Éûÿÿÿÿ
+<python:S125ù"Remove this commented out code.(Þ­œþÿÿÿÿ
+7python:S125€"Remove this commented out code.(Ó¤Û
+]python:S6711¸"DUse a "numpy.random.Generator" here instead of this legacy function.(Ï•ñÌ
+bpython:S6711º"DUse a "numpy.random.Generator" here instead of this legacy function.(¯ò¤³ùÿÿÿÿ
+bpython:S6711À"DUse a "numpy.random.Generator" here instead of this legacy function.(á´±èùÿÿÿÿ
+]python:S6711Â"DUse a "numpy.random.Generator" here instead of this legacy function.(¬¥Ïå
