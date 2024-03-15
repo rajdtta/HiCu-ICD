@@ -1,13 +1,11 @@
-
 import pandas as pd
 from collections import Counter, defaultdict
 import csv
 import operator
 from utils.options import args
-from utils.utils import build_vocab, word_embeddings, fasttext_embeddings, gensim_to_fasttext_embeddings, gensim_to_embeddings, \
+from utils.utils import build_vocab, word_embeddings, fasttext_embeddings, gensim_to_fasttext_embeddings, \
+    gensim_to_embeddings, \
     reformat, write_discharge_summaries, concat_data, split_data
-
-
 
 Y = 'full'
 notes_file = '%s/NOTEEVENTS.csv' % args.MIMIC_3_DIR
@@ -21,18 +19,17 @@ dfproc['absolute_code'] = dfproc.apply(lambda row: str(reformat(str(row[4]), Fal
 
 dfcodes = pd.concat([dfdiag, dfproc])
 
-
 dfcodes.to_csv('%s/ALL_CODES.csv' % args.MIMIC_3_DIR, index=False,
-           columns=['ROW_ID', 'SUBJECT_ID', 'HADM_ID', 'SEQ_NUM', 'absolute_code'],
-           header=['ROW_ID', 'SUBJECT_ID', 'HADM_ID', 'SEQ_NUM', 'ICD9_CODE'])
+               columns=['ROW_ID', 'SUBJECT_ID', 'HADM_ID', 'SEQ_NUM', 'absolute_code'],
+               header=['ROW_ID', 'SUBJECT_ID', 'HADM_ID', 'SEQ_NUM', 'ICD9_CODE'])
 
 df = pd.read_csv('%s/ALL_CODES.csv' % args.MIMIC_3_DIR, dtype={"ICD9_CODE": str})
 print("unique ICD9 code: {}".format(len(df['ICD9_CODE'].unique())))
 
 # step 2: process notes
 min_sentence_len = 3
-disch_full_file = write_discharge_summaries("%s/disch_full.csv" % args.MIMIC_3_DIR, min_sentence_len, '%s/NOTEEVENTS.csv' % (args.MIMIC_3_DIR))
-
+disch_full_file = write_discharge_summaries("%s/disch_full.csv" % args.MIMIC_3_DIR, min_sentence_len,
+                                            '%s/NOTEEVENTS.csv' % (args.MIMIC_3_DIR))
 
 df = pd.read_csv('%s/disch_full.csv' % args.MIMIC_3_DIR)
 
@@ -45,12 +42,12 @@ with open('%s/ALL_CODES.csv' % args.MIMIC_3_DIR, 'r') as lf:
         w = csv.writer(of)
         w.writerow(['SUBJECT_ID', 'HADM_ID', 'ICD9_CODE', 'ADMITTIME', 'DISCHTIME'])
         r = csv.reader(lf)
-        #header
+        # header
         next(r)
-        for i,row in enumerate(r):
+        for i, row in enumerate(r):
             hadm_id = int(row[2])
-            #print(hadm_id)
-            #break
+            # print(hadm_id)
+            # break
             if hadm_id in hadm_ids:
                 w.writerow(row[1:3] + [row[-1], '', ''])
 
@@ -63,7 +60,8 @@ sorted_file = '%s/disch_full.csv' % args.MIMIC_3_DIR
 df.to_csv(sorted_file, index=False)
 
 # step 4: link notes with their code
-labeled = concat_data('%s/ALL_CODES_filtered.csv' % args.MIMIC_3_DIR, sorted_file, '%s/notes_labeled.csv' % args.MIMIC_3_DIR)
+labeled = concat_data('%s/ALL_CODES_filtered.csv' % args.MIMIC_3_DIR, sorted_file,
+                      '%s/notes_labeled.csv' % args.MIMIC_3_DIR)
 
 dfnl = pd.read_csv(labeled)
 
@@ -81,7 +79,7 @@ print("SUBJECT_ID: {}".format(len(dfnl['SUBJECT_ID'].unique())))
 
 # step 6: split data into train dev test
 fname = '%s/notes_labeled.csv' % args.MIMIC_3_DIR
-base_name = "%s/disch" % args.MIMIC_3_DIR #for output
+base_name = "%s/disch" % args.MIMIC_3_DIR  # for output
 tr, dv, te = split_data(fname, base_name, args.MIMIC_3_DIR)
 
 vocab_min = 3
@@ -144,7 +142,7 @@ for splt in ['train', 'dev', 'test']:
         with open('%s/%s_%s.csv' % (args.MIMIC_3_DIR, splt, str(Y)), 'w', newline='') as of:
             r = csv.reader(f)
             w = csv.writer(of)
-            #header
+            # header
             w.writerow(next(r))
             i = 0
             for row in r:

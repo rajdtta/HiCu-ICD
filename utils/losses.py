@@ -118,6 +118,7 @@ class ASLSingleLabel(nn.Module):
     '''
     This loss is intended for single-label classification problems
     '''
+
     def __init__(self, gamma_pos=0, gamma_neg=4, eps: float = 0.1, reduction='mean'):
         super(ASLSingleLabel, self).__init__()
 

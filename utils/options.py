@@ -17,9 +17,10 @@ parser.add_argument("--MAX_LENGTH", type=int, default=4096)
 
 # model
 parser.add_argument("--model", type=str, choices=[
-                    'MultiResCNN', 'longformer', 'RACReader', 'LAAT'], default='MultiResCNN')
-parser.add_argument("--decoder", type=str, choices=['HierarchicalHyperbolic', 'Hierarchical', 'LAATHierarchicalHyperbolic', 'LAATHierarchical',
-                                                   'CodeTitle', 'RandomlyInitialized', 'LAATDecoder'], default='HierarchicalHyperbolic')
+    'MultiResCNN', 'longformer', 'RACReader', 'LAAT'], default='MultiResCNN')
+parser.add_argument("--decoder", type=str,
+                    choices=['HierarchicalHyperbolic', 'Hierarchical', 'LAATHierarchicalHyperbolic', 'LAATHierarchical',
+                             'CodeTitle', 'RandomlyInitialized', 'LAATDecoder'], default='HierarchicalHyperbolic')
 parser.add_argument("--filter_size", type=str, default="3,5,9,15,19,25",
                     help="Conv layer filter size for MultiResCNN and RAC model. For MultiResCNN, this is a list of integers seperated by comma; for RAC, this is a single integer number")
 parser.add_argument("--num_filter_maps", type=int, default=50)

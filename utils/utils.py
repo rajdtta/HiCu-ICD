@@ -10,60 +10,62 @@ import codecs
 import re
 from utils.icd_hierarchy import generate_code_hierarchy
 
+
 def gensim_to_embeddings(wv_file, vocab_file, Y, outfile=None):
     model = gensim.models.Word2Vec.load(wv_file)
     wv = model.wv
-    #free up memory
+    # free up memory
     del model
 
     vocab = set()
     with open(vocab_file, 'r') as vocabfile:
-        for i,line in enumerate(vocabfile):
+        for i, line in enumerate(vocabfile):
             line = line.strip()
             if line != '':
                 vocab.add(line)
-    ind2w = {i+1:w for i,w in enumerate(sorted(vocab))}
+    ind2w = {i + 1: w for i, w in enumerate(sorted(vocab))}
 
     W, words = build_matrix(ind2w, wv)
 
     if outfile is None:
         outfile = wv_file.replace('.w2v', '.embed')
 
-    #smash that save button
+    # smash that save button
     save_embeddings(W, words, outfile)
+
 
 def gensim_to_fasttext_embeddings(wv_file, vocab_file, Y, outfile=None):
     model = gensim.models.FastText.load(wv_file)
     wv = model.wv
-    #free up memory
+    # free up memory
     del model
 
     vocab = set()
     with open(vocab_file, 'r') as vocabfile:
-        for i,line in enumerate(vocabfile):
+        for i, line in enumerate(vocabfile):
             line = line.strip()
             if line != '':
                 vocab.add(line)
-    ind2w = {i+1:w for i,w in enumerate(sorted(vocab))}
+    ind2w = {i + 1: w for i, w in enumerate(sorted(vocab))}
 
     W, words = build_matrix(ind2w, wv)
 
     if outfile is None:
         outfile = wv_file.replace('.fasttext', '.fasttext.embed')
 
-    #smash that save button
+    # smash that save button
     save_embeddings(W, words, outfile)
 
 
 def build_matrix(ind2w, wv):
     """
-        Go through vocab in order. Find vocab word in wv.index2word, then call wv.word_vec(wv.index2word[i]).
+        Go through vocab in order. Find vocab word in wv.index_to_key, then call wv.word_vec(wv.index2word[i]).
         Put results into one big matrix.
         Note: ind2w starts at 1 (saving 0 for the pad character), but gensim word vectors starts at 0
     """
-    W = np.zeros((len(ind2w)+1, len(wv.word_vec(wv.index2word[0])) ))
+    W = np.zeros((len(ind2w) + 1, len(wv.word_vec(wv.index_to_key[0]))))
     words = ["**PAD**"]
-    W[0][:] = np.zeros(len(wv.word_vec(wv.index2word[0])))
+    W[0][:] = np.zeros(len(wv.word_vec(wv.index_to_key[0])))
     for idx, word in tqdm(ind2w.items()):
         if idx >= W.shape[0]:
             break
@@ -71,24 +73,26 @@ def build_matrix(ind2w, wv):
         words.append(word)
     return W, words
 
+
 def save_embeddings(W, words, outfile):
     with open(outfile, 'w') as o:
-        #pad token already included
+        # pad token already included
         for i in range(len(words)):
             line = [words[i]]
             line.extend([str(d) for d in W[i]])
             o.write(" ".join(line) + "\n")
 
+
 def load_embeddings(embed_file):
-    #also normalizes the embeddings
+    # also normalizes the embeddings
     W = []
     with open(embed_file) as ef:
         for line in ef:
             line = line.rstrip().split()
-            vec = np.array(line[1:]).astype(np.float)
+            vec = np.array(line[1:]).astype(float)
             vec = vec / float(np.linalg.norm(vec) + 1e-6)
             W.append(vec)
-        #UNK embedding, gaussian randomly initialized
+        # UNK embedding, gaussian randomly initialized
         print("adding unk embedding")
         vec = np.random.randn(len(W[-1]))
         vec = vec / float(np.linalg.norm(vec) + 1e-6)
@@ -114,12 +118,12 @@ def word_embeddings(Y, notes_file, embedding_size, min_count, n_iter):
     modelname = f"processed_{Y}_{embedding_size}.w2v"
     sentences = ProcessedIter(Y, notes_file)
 
-    model = w2v.Word2Vec(size=embedding_size, min_count=min_count, workers=4, iter=n_iter)
+    model = w2v.Word2Vec(vector_size=embedding_size, min_count=min_count, workers=4, epochs=n_iter)
     print("building word2vec vocab on %s..." % (notes_file))
 
     model.build_vocab(sentences)
     print("training...")
-    model.train(sentences, total_examples=model.corpus_count, epochs=model.iter)
+    model.train(sentences, total_examples=model.corpus_count, epochs=model.epochs)
     out_file = '/'.join(notes_file.split('/')[:-1] + [modelname])
     print("writing embeddings to %s" % (out_file))
     model.save(out_file)
@@ -130,18 +134,21 @@ def fasttext_embeddings(Y, notes_file, embedding_size, min_count, n_iter):
     modelname = f"processed_{Y}_{embedding_size}.fasttext"
     sentences = ProcessedIter(Y, notes_file)
 
-    model = fasttext.FastText(size=embedding_size, min_count=min_count, iter=n_iter)
+    model = fasttext.FastText(vector_size=embedding_size, min_count=min_count, epochs=n_iter)
     print("building fasttext vocab on %s..." % (notes_file))
 
     model.build_vocab(sentences)
     print("training...")
-    model.train(sentences, total_examples=model.corpus_count, epochs=model.iter)
+    model.train(sentences, total_examples=model.corpus_count, epochs=model.epochs)
     out_file = '/'.join(notes_file.split('/')[:-1] + [modelname])
     print("writing embeddings to %s" % (out_file))
     model.save(out_file)
     return out_file
 
+
 import operator
+
+
 def build_vocab(vocab_min, infile, vocab_filename, doc_level=True):
     """
         INPUTS:
@@ -240,10 +247,12 @@ def reformat(code, is_diag):
 
 import nltk
 from nltk.tokenize import RegexpTokenizer
+
 nlp_tool = nltk.data.load('tokenizers/punkt/english.pickle')
 tokenizer = RegexpTokenizer(r'\w+')
-def write_discharge_summaries(out_file, min_sentence_len, notes_file):
 
+
+def write_discharge_summaries(out_file, min_sentence_len, notes_file):
     print("processing notes file")
     with open(notes_file, 'r') as csvfile:
         with open(out_file, 'w') as outfile:
@@ -279,7 +288,6 @@ def write_discharge_summaries(out_file, min_sentence_len, notes_file):
                     text = '"' + text + '"'
                     outfile.write(','.join([line[1], line[2], line[4], text]) + '\n')
 
-
     return out_file
 
 
@@ -313,9 +321,10 @@ def concat_data(labelsfile, notes_file, outfilename):
 
     return outfilename
 
+
 def split_data(labeledfile, base_name, mimic_dir):
     print("SPLITTING")
-    #create and write headers for train, dev, test
+    # create and write headers for train, dev, test
     train_name = '%s_train_split.csv' % (base_name)
     dev_name = '%s_dev_split.csv' % (base_name)
     test_name = '%s_test_split.csv' % (base_name)
@@ -328,7 +337,7 @@ def split_data(labeledfile, base_name, mimic_dir):
 
     hadm_ids = {}
 
-    #read in train, dev, test splits
+    # read in train, dev, test splits
     for splt in ['train', 'dev', 'test']:
         hadm_ids[splt] = set()
         with open('%s/%s_full_hadm_ids.csv' % (mimic_dir, splt), 'r') as f:
@@ -341,10 +350,10 @@ def split_data(labeledfile, base_name, mimic_dir):
         i = 0
         cur_hadm = 0
         for row in reader:
-            #filter text, write to file according to train/dev/test split
+            # filter text, write to file according to train/dev/test split
             if i % 10000 == 0:
                 print(str(i) + " read")
-            
+
             if not row:
                 continue
 
@@ -425,6 +434,7 @@ def next_notes(notesfile):
             cur_text += " " + text
     yield cur_subj, cur_text, cur_hadm
 
+
 def load_vocab_dict(args, vocab_file):
     vocab = set()
 
@@ -441,21 +451,22 @@ def load_vocab_dict(args, vocab_file):
 
     return ind2w, w2ind
 
+
 from collections import defaultdict
 
-def load_full_codes(train_path, mimic2_dir, version='mimic3'):
 
+def load_full_codes(train_path, mimic2_dir, version='mimic3'):
     if version == 'mimic2':
         ind2c = defaultdict(str)
         codes = set()
         with open(mimic2_dir, 'r') as f:
             r = csv.reader(f)
-            #header
+            # header
             next(r)
             for row in r:
                 codes.update(set(row[-1].split(';')))
         codes = set([c for c in codes if c != ''])
-        ind2c = defaultdict(str, {i:c for i,c in enumerate(sorted(codes))})
+        ind2c = defaultdict(str, {i: c for i, c in enumerate(sorted(codes))})
         hierarchy_dist = None
     else:
         codes = set()
@@ -472,21 +483,23 @@ def load_full_codes(train_path, mimic2_dir, version='mimic3'):
 
 
 def load_lookups(args):
-
     ind2w, w2ind = load_vocab_dict(args, args.vocab)
 
-    #get code and description lookups
+    # get code and description lookups
     if args.Y == 'full':
-        hierarchy_dist, ind2c = load_full_codes(args.data_path, '%s/proc_dsums.csv' % args.MIMIC_2_DIR, version=args.version)
+        hierarchy_dist, ind2c = load_full_codes(args.data_path, '%s/proc_dsums.csv' % args.MIMIC_2_DIR,
+                                                version=args.version)
     else:
         codes = set()
         with open("%s/TOP_%s_CODES.csv" % (args.MIMIC_3_DIR, str(args.Y)), 'r') as labelfile:
             lr = csv.reader(labelfile)
-            for i,row in enumerate(lr):
+            for i, row in enumerate(lr):
                 codes.add(row[0])
         hierarchy_dist, ind2c = generate_code_hierarchy(codes)
 
-    c2ind = {i: {c:j for j,c in ind2c[i].items()} for i in range(5)}
+    # c2ind = {i: {c: j for j, c in ind2c[i].items()} for i in range(5)}
+    # @RAJ NOTE - Replaced the line above with the line below
+    c2ind = {i: {c: j for j, c in enumerate(ind2c[i])} for i in range(5)}
 
     dicts = {'ind2w': ind2w, 'w2ind': w2ind, 'ind2c': ind2c, 'c2ind': c2ind, 'hierarchy_dist': hierarchy_dist}
 
@@ -501,7 +514,7 @@ def prepare_code_title(dicts, args, max_length):
     c2title = {}
     with open("%s/D_ICD_DIAGNOSES.csv" % (args.DATA_DIR), 'r') as diagnoses_title_file:
         dr = csv.reader(diagnoses_title_file)
-        next(dr) # header
+        next(dr)  # header
         for i, row in enumerate(dr):
             code = reformat(row[1], True)
             if code in c2ind.keys():
@@ -510,7 +523,7 @@ def prepare_code_title(dicts, args, max_length):
     # get procedures code titles
     with open("%s/D_ICD_PROCEDURES.csv" % (args.DATA_DIR), 'r') as procedures_title_file:
         pr = csv.reader(procedures_title_file)
-        next(pr) # header
+        next(pr)  # header
         for i, row in enumerate(pr):
             code = reformat(row[1], False)
             if code in c2ind.keys():
@@ -541,7 +554,7 @@ def prepare_code_title(dicts, args, max_length):
         padded_tokens_id[:len(tokens_id)] = tokens_id
 
         dict_code_title[code] = padded_tokens_id
-    
+
     ind2c = dicts['ind2c'][4]
     code_title = []
     for code_id, code in ind2c.items():
@@ -558,7 +571,7 @@ def prepare_instance(dicts, filename, args, max_length):
 
     with open(filename, 'r') as infile:
         r = csv.reader(infile)
-        #header
+        # header
         next(r)
 
         for row in r:
@@ -571,7 +584,7 @@ def prepare_instance(dicts, filename, args, max_length):
                 labels_idx = np.zeros(num_labels[i])
 
                 for l in row[3].split(';'):
-                    if l in c2ind[4].keys(): # always check max depth
+                    if l in c2ind[4].keys():  # always check max depth
                         code = int(c2ind[i][hierarchy_dist[4][l][i]])
                         labels_idx[code] = 1
                         labelled = True
@@ -595,16 +608,17 @@ def prepare_instance(dicts, filename, args, max_length):
                 tokens_id = tokens_id[:max_length]
 
             dict_instance = {'label': labels_list,
-                                 'tokens': tokens,
-                                 "tokens_id": tokens_id}
+                             'tokens': tokens,
+                             "tokens_id": tokens_id}
 
             instances.append(dict_instance)
-
 
     return instances
 
 
 from transformers import LongformerTokenizer
+
+
 def prepare_instance_longformer(dicts, filename, args, max_length):
     ind2w, w2ind, ind2c, c2ind = dicts['ind2w'], dicts['w2ind'], dicts['ind2c'], dicts['c2ind']
     hierarchy_dist = dicts['hierarchy_dist']
@@ -614,7 +628,7 @@ def prepare_instance_longformer(dicts, filename, args, max_length):
     if args.longformer_dir != "":
         tokenizer = LongformerTokenizer.from_pretrained(args.longformer_dir)
     else:
-        tokenizer = LongformerTokenizer('longformer-base-4096')
+        tokenizer = LongformerTokenizer.from_pretrained('allenai/longformer-base-4096')
 
     with open(filename, 'r') as infile:
         r = csv.reader(infile)
@@ -631,7 +645,7 @@ def prepare_instance_longformer(dicts, filename, args, max_length):
                 labels_idx = np.zeros(num_labels[i])
 
                 for l in row[3].split(';'):
-                    if l in c2ind[4].keys(): # always check max depth
+                    if l in c2ind[4].keys():  # always check max depth
                         code = int(c2ind[i][hierarchy_dist[4][l][i]])
                         labels_idx[code] = 1
                         labelled = True
@@ -664,11 +678,12 @@ def prepare_instance_longformer(dicts, filename, args, max_length):
 
 
 from torch.utils.data import Dataset
+
+
 class MyDataset(Dataset):
 
     def __init__(self, X):
         self.X = X
-
 
     def __len__(self):
         return len(self.X)
@@ -676,16 +691,16 @@ class MyDataset(Dataset):
     def __getitem__(self, idx):
         return self.X[idx]
 
-def pad_sequence(x, max_len, type=np.int):
 
+def pad_sequence(x, max_len, type=int):
     padded_x = np.zeros((len(x), max_len), dtype=type)
     for i, row in enumerate(x):
         padded_x[i][:len(row)] = row
 
     return padded_x
 
-def my_collate(x):
 
+def my_collate(x):
     words = [x_['tokens_id'] for x_ in x]
 
     seq_len = [len(w) for w in words]
@@ -693,14 +708,14 @@ def my_collate(x):
 
     inputs_id = pad_sequence(words, max_seq_len)
 
-    labels = {i:[x_['label'][i] for x_ in x] for i in range(5)}
+    labels = {i: [x_['label'][i] for x_ in x] for i in range(5)}
 
     text_inputs = torch.tensor([0])
 
     return inputs_id, labels, text_inputs
 
-def my_collate_longformer(x):
 
+def my_collate_longformer(x):
     words = [x_['tokens_id'] for x_ in x]
     segments = [x_['segments'] for x_ in x]
     masks = [x_['masks'] for x_ in x]
@@ -712,7 +727,7 @@ def my_collate_longformer(x):
     segments = pad_sequence(segments, max_seq_len)
     masks = pad_sequence(masks, max_seq_len)
 
-    labels = {i:[x_['label'][i] for x_ in x] for i in range(5)}
+    labels = {i: [x_['label'][i] for x_ in x] for i in range(5)}
 
     return inputs_id, segments, masks, labels
 
@@ -727,23 +742,27 @@ def early_stop(metrics_hist, criterion, patience):
     else:
         return False
 
+
 import json
+
+
 def save_metrics(metrics_hist_all, model_dir):
     with open(model_dir + "/metrics.json", 'w') as metrics_file:
-        #concatenate dev, train metrics into one dict
+        # concatenate dev, train metrics into one dict
         data = metrics_hist_all[0].copy()
-        data.update({"%s_te" % (name):val for (name,val) in metrics_hist_all[1].items()})
-        data.update({"%s_tr" % (name):val for (name,val) in metrics_hist_all[2].items()})
+        data.update({"%s_te" % (name): val for (name, val) in metrics_hist_all[1].items()})
+        data.update({"%s_tr" % (name): val for (name, val) in metrics_hist_all[2].items()})
         json.dump(data, metrics_file, indent=1)
 
 
 import torch
-def save_everything(args, metrics_hist_all, model, model_dir, params, criterion, evaluate=False):
 
+
+def save_everything(args, metrics_hist_all, model, model_dir, params, criterion, evaluate=False):
     save_metrics(metrics_hist_all, model_dir)
 
     if not evaluate:
-        #save the model with the best criterion metric
+        # save the model with the best criterion metric
         if not np.all(np.isnan(metrics_hist_all[0][criterion])):
             if criterion == 'loss_dev':
                 eval_val = np.nanargmin(metrics_hist_all[0][criterion])
@@ -760,46 +779,57 @@ def save_everything(args, metrics_hist_all, model, model_dir, params, criterion,
     print("saved metrics, params, model to directory %s\n" % (model_dir))
 
 
-
 def print_metrics(metrics):
     print()
     if "auc_macro" in metrics.keys():
         print("[MACRO] accuracy, precision, recall, f-measure, AUC")
-        print("%.4f, %.4f, %.4f, %.4f, %.4f" % (metrics["acc_macro"], metrics["prec_macro"], metrics["rec_macro"], metrics["f1_macro"], metrics["auc_macro"]))
+        print("%.4f, %.4f, %.4f, %.4f, %.4f" % (
+            metrics["acc_macro"], metrics["prec_macro"], metrics["rec_macro"], metrics["f1_macro"],
+            metrics["auc_macro"]))
     else:
         print("[MACRO] accuracy, precision, recall, f-measure")
-        print("%.4f, %.4f, %.4f, %.4f" % (metrics["acc_macro"], metrics["prec_macro"], metrics["rec_macro"], metrics["f1_macro"]))
+        print("%.4f, %.4f, %.4f, %.4f" % (
+            metrics["acc_macro"], metrics["prec_macro"], metrics["rec_macro"], metrics["f1_macro"]))
 
     if "auc_micro" in metrics.keys():
         print("[MICRO] accuracy, precision, recall, f-measure, AUC")
-        print("%.4f, %.4f, %.4f, %.4f, %.4f" % (metrics["acc_micro"], metrics["prec_micro"], metrics["rec_micro"], metrics["f1_micro"], metrics["auc_micro"]))
+        print("%.4f, %.4f, %.4f, %.4f, %.4f" % (
+            metrics["acc_micro"], metrics["prec_micro"], metrics["rec_micro"], metrics["f1_micro"],
+            metrics["auc_micro"]))
     else:
         print("[MICRO] accuracy, precision, recall, f-measure")
-        print("%.4f, %.4f, %.4f, %.4f" % (metrics["acc_micro"], metrics["prec_micro"], metrics["rec_micro"], metrics["f1_micro"]))
+        print("%.4f, %.4f, %.4f, %.4f" % (
+            metrics["acc_micro"], metrics["prec_micro"], metrics["rec_micro"], metrics["f1_micro"]))
     for metric, val in metrics.items():
         if metric.find("rec_at") != -1:
             print("%s: %.4f" % (metric, val))
     print()
 
+
 def union_size(yhat, y, axis):
-    #axis=0 for label-level union (macro). axis=1 for instance-level
+    # axis=0 for label-level union (macro). axis=1 for instance-level
     return np.logical_or(yhat, y).sum(axis=axis).astype(float)
 
+
 def intersect_size(yhat, y, axis):
-    #axis=0 for label-level union (macro). axis=1 for instance-level
+    # axis=0 for label-level union (macro). axis=1 for instance-level
     return np.logical_and(yhat, y).sum(axis=axis).astype(float)
+
 
 def macro_accuracy(yhat, y):
     num = intersect_size(yhat, y, 0) / (union_size(yhat, y, 0) + 1e-10)
     return np.mean(num)
 
+
 def macro_precision(yhat, y):
     num = intersect_size(yhat, y, 0) / (yhat.sum(axis=0) + 1e-10)
     return np.mean(num)
 
+
 def macro_recall(yhat, y):
     num = intersect_size(yhat, y, 0) / (y.sum(axis=0) + 1e-10)
     return np.mean(num)
+
 
 def macro_f1(yhat, y):
     prec = macro_precision(yhat, y)
@@ -807,21 +837,25 @@ def macro_f1(yhat, y):
     if prec + rec == 0:
         f1 = 0.
     else:
-        f1 = 2*(prec*rec)/(prec+rec)
+        f1 = 2 * (prec * rec) / (prec + rec)
     return f1
 
 
 def all_macro(yhat, y):
     return macro_accuracy(yhat, y), macro_precision(yhat, y), macro_recall(yhat, y), macro_f1(yhat, y)
 
+
 def micro_accuracy(yhatmic, ymic):
     return intersect_size(yhatmic, ymic, 0) / (union_size(yhatmic, ymic, 0) + 1e-10)
+
 
 def micro_precision(yhatmic, ymic):
     return intersect_size(yhatmic, ymic, 0) / (yhatmic.sum(axis=0) + 1e-10)
 
+
 def micro_recall(yhatmic, ymic):
     return intersect_size(yhatmic, ymic, 0) / (ymic.sum(axis=0) + 1e-10)
+
 
 def micro_f1(yhatmic, ymic):
     prec = micro_precision(yhatmic, ymic)
@@ -832,52 +866,58 @@ def micro_f1(yhatmic, ymic):
         f1 = 2 * (prec * rec) / (prec + rec)
     return f1
 
+
 def all_micro(yhatmic, ymic):
-    return micro_accuracy(yhatmic, ymic), micro_precision(yhatmic, ymic), micro_recall(yhatmic, ymic), micro_f1(yhatmic, ymic)
+    return micro_accuracy(yhatmic, ymic), micro_precision(yhatmic, ymic), micro_recall(yhatmic, ymic), micro_f1(yhatmic,
+                                                                                                                ymic)
+
 
 from sklearn.metrics import roc_curve, auc
+
+
 def auc_metrics(yhat_raw, y, ymic):
     if yhat_raw.shape[0] <= 1:
         return
     fpr = {}
     tpr = {}
     roc_auc = {}
-    #get AUC for each label individually
+    # get AUC for each label individually
     relevant_labels = []
     auc_labels = {}
     for i in range(y.shape[1]):
-        #only if there are true positives for this label
-        if y[:,i].sum() > 0:
-            fpr[i], tpr[i], _ = roc_curve(y[:,i], yhat_raw[:,i])
+        # only if there are true positives for this label
+        if y[:, i].sum() > 0:
+            fpr[i], tpr[i], _ = roc_curve(y[:, i], yhat_raw[:, i])
             if len(fpr[i]) > 1 and len(tpr[i]) > 1:
                 auc_score = auc(fpr[i], tpr[i])
                 if not np.isnan(auc_score):
                     auc_labels["auc_%d" % i] = auc_score
                     relevant_labels.append(i)
 
-    #macro-AUC: just average the auc scores
+    # macro-AUC: just average the auc scores
     aucs = []
     for i in relevant_labels:
         aucs.append(auc_labels['auc_%d' % i])
     roc_auc['auc_macro'] = np.mean(aucs)
 
-    #micro-AUC: just look at each individual prediction
+    # micro-AUC: just look at each individual prediction
     yhatmic = yhat_raw.ravel()
     fpr["micro"], tpr["micro"], _ = roc_curve(ymic, yhatmic)
     roc_auc["auc_micro"] = auc(fpr["micro"], tpr["micro"])
 
     return roc_auc
 
-def recall_at_k(yhat_raw, y, k):
-    #num true labels in top k predictions / num true labels
-    sortd = np.argsort(yhat_raw)[:,::-1]
-    topk = sortd[:,:k]
 
-    #get recall at k for each example
+def recall_at_k(yhat_raw, y, k):
+    # num true labels in top k predictions / num true labels
+    sortd = np.argsort(yhat_raw)[:, ::-1]
+    topk = sortd[:, :k]
+
+    # get recall at k for each example
     vals = []
     for i, tk in enumerate(topk):
-        num_true_in_top_k = y[i,tk].sum()
-        denom = y[i,:].sum()
+        num_true_in_top_k = y[i, tk].sum()
+        denom = y[i, :].sum()
         vals.append(num_true_in_top_k / float(denom))
 
     vals = np.array(vals)
@@ -885,20 +925,22 @@ def recall_at_k(yhat_raw, y, k):
 
     return np.mean(vals)
 
-def precision_at_k(yhat_raw, y, k):
-    #num true labels in top k predictions / k
-    sortd = np.argsort(yhat_raw)[:,::-1]
-    topk = sortd[:,:k]
 
-    #get precision at k for each example
+def precision_at_k(yhat_raw, y, k):
+    # num true labels in top k predictions / k
+    sortd = np.argsort(yhat_raw)[:, ::-1]
+    topk = sortd[:, :k]
+
+    # get precision at k for each example
     vals = []
     for i, tk in enumerate(topk):
         if len(tk) > 0:
-            num_true_in_top_k = y[i,tk].sum()
+            num_true_in_top_k = y[i, tk].sum()
             denom = len(tk)
             vals.append(num_true_in_top_k / float(denom))
 
     return np.mean(vals)
+
 
 def all_metrics(yhat, y, k=8, yhat_raw=None, calc_auc=True):
     """
@@ -912,10 +954,10 @@ def all_metrics(yhat, y, k=8, yhat_raw=None, calc_auc=True):
     """
     names = ["acc", "prec", "rec", "f1"]
 
-    #macro
+    # macro
     macro = all_macro(yhat, y)
 
-    #micro
+    # micro
     ymic = y.ravel()
     yhatmic = yhat.ravel()
     micro = all_micro(yhatmic, ymic)
@@ -923,17 +965,17 @@ def all_metrics(yhat, y, k=8, yhat_raw=None, calc_auc=True):
     metrics = {names[i] + "_macro": macro[i] for i in range(len(macro))}
     metrics.update({names[i] + "_micro": micro[i] for i in range(len(micro))})
 
-    #AUC and @k
+    # AUC and @k
     if yhat_raw is not None and calc_auc:
-        #allow k to be passed as int or list
-        if type(k) != list:
+        # allow k to be passed as int or list
+        if not isinstance(k, list):
             k = [k]
         for k_i in k:
             rec_at_k = recall_at_k(yhat_raw, y, k_i)
             metrics['rec_at_%d' % k_i] = rec_at_k
             prec_at_k = precision_at_k(yhat_raw, y, k_i)
             metrics['prec_at_%d' % k_i] = prec_at_k
-            metrics['f1_at_%d' % k_i] = 2*(prec_at_k*rec_at_k)/(prec_at_k+rec_at_k)
+            metrics['f1_at_%d' % k_i] = 2 * (prec_at_k * rec_at_k) / (prec_at_k + rec_at_k)
 
         roc_auc = auc_metrics(yhat_raw, y, ymic)
         metrics.update(roc_auc)
@@ -966,7 +1008,7 @@ def _readString(f, code):
         temp = bytes()
         temp = temp + c
 
-        while i<continue_to_read:
+        while i < continue_to_read:
             temp = temp + f.read(1)
             i += 1
 
@@ -978,11 +1020,15 @@ def _readString(f, code):
 
     return s
 
+
 import struct
+
+
 def _readFloat(f):
     bytes4 = f.read(4)
     f_num = struct.unpack('f', bytes4)[0]
     return f_num
+
 
 def load_pretrain_emb(embedding_path):
     embedd_dim = -1
@@ -1001,7 +1047,7 @@ def load_pretrain_emb(embedding_path):
                 word_vector = []
                 for j in range(embedd_dim):
                     word_vector.append(_readFloat(f))
-                word_vector = np.array(word_vector, np.float)
+                word_vector = np.array(word_vector, float)
 
                 f.read(1)  # a line break
 
@@ -1017,7 +1063,7 @@ def load_pretrain_emb(embedding_path):
                 # tokens = line.split()
                 tokens = re.split(r"\s+", line)
                 if len(tokens) == 2:
-                    continue # it's a head
+                    continue  # it's a head
                 if embedd_dim < 0:
                     embedd_dim = len(tokens) - 1
                 else:
@@ -1028,19 +1074,19 @@ def load_pretrain_emb(embedding_path):
                 embedd[:] = tokens[1:]
                 embedd_dict[tokens[0]] = embedd
 
-
     return embedd_dict, embedd_dim
+
 
 def norm2one(vec):
     root_sum_square = np.sqrt(np.sum(np.square(vec)))
-    return vec/root_sum_square
+    return vec / root_sum_square
+
 
 def build_pretrain_embedding(embedding_path, word_alphabet, norm):
-
     embedd_dict, embedd_dim = load_pretrain_emb(embedding_path)
 
     scale = np.sqrt(3.0 / embedd_dim)
-    pretrain_emb = np.zeros([len(word_alphabet)+2, embedd_dim], dtype=np.float32)  # add UNK (last) and PAD (0)
+    pretrain_emb = np.zeros([len(word_alphabet) + 2, embedd_dim], dtype=np.float32)  # add UNK (last) and PAD (0)
     perfect_match = 0
     case_match = 0
     digits_replaced_with_zeros_found = 0
@@ -1049,37 +1095,37 @@ def build_pretrain_embedding(embedding_path, word_alphabet, norm):
     for word, index in word_alphabet.items():
         if word in embedd_dict:
             if norm:
-                pretrain_emb[index,:] = norm2one(embedd_dict[word])
+                pretrain_emb[index, :] = norm2one(embedd_dict[word])
             else:
-                pretrain_emb[index,:] = embedd_dict[word]
+                pretrain_emb[index, :] = embedd_dict[word]
             perfect_match += 1
 
         elif word.lower() in embedd_dict:
             if norm:
-                pretrain_emb[index,:] = norm2one(embedd_dict[word.lower()])
+                pretrain_emb[index, :] = norm2one(embedd_dict[word.lower()])
             else:
-                pretrain_emb[index,:] = embedd_dict[word.lower()]
+                pretrain_emb[index, :] = embedd_dict[word.lower()]
             case_match += 1
 
-        elif re.sub('\d', '0', word) in embedd_dict:
+        elif re.sub(r'\d', '0', word) in embedd_dict:
             if norm:
-                pretrain_emb[index,:] = norm2one(embedd_dict[re.sub('\d', '0', word)])
+                pretrain_emb[index, :] = norm2one(embedd_dict[re.sub(r'\d', '0', word)])
             else:
-                pretrain_emb[index,:] = embedd_dict[re.sub('\d', '0', word)]
+                pretrain_emb[index, :] = embedd_dict[re.sub(r'\d', '0', word)]
             digits_replaced_with_zeros_found += 1
 
-        elif re.sub('\d', '0', word.lower()) in embedd_dict:
+        elif re.sub(r'\d', '0', word.lower()) in embedd_dict:
             if norm:
-                pretrain_emb[index,:] = norm2one(embedd_dict[re.sub('\d', '0', word.lower())])
+                pretrain_emb[index, :] = norm2one(embedd_dict[re.sub(r'\d', '0', word.lower())])
             else:
-                pretrain_emb[index,:] = embedd_dict[re.sub('\d', '0', word.lower())]
+                pretrain_emb[index, :] = embedd_dict[re.sub(r'\d', '0', word.lower())]
             lowercase_and_digits_replaced_with_zeros_found += 1
 
         else:
             if norm:
                 pretrain_emb[index, :] = norm2one(np.random.uniform(-scale, scale, [1, embedd_dim]))
             else:
-                pretrain_emb[index,:] = np.random.uniform(-scale, scale, [1, embedd_dim])
+                pretrain_emb[index, :] = np.random.uniform(-scale, scale, [1, embedd_dim])
             not_match += 1
 
     # initialize pad and unknown
@@ -1089,11 +1135,12 @@ def build_pretrain_embedding(embedding_path, word_alphabet, norm):
     else:
         pretrain_emb[-1, :] = np.random.uniform(-scale, scale, [1, embedd_dim])
 
-
     print("pretrained word emb size {}".format(len(embedd_dict)))
     print("prefect match:%.2f%%, case_match:%.2f%%, dig_zero_match:%.2f%%, "
-                 "case_dig_zero_match:%.2f%%, not_match:%.2f%%"
-                 %(perfect_match*100.0/len(word_alphabet), case_match*100.0/len(word_alphabet), digits_replaced_with_zeros_found*100.0/len(word_alphabet),
-                   lowercase_and_digits_replaced_with_zeros_found*100.0/len(word_alphabet), not_match*100.0/len(word_alphabet)))
+          "case_dig_zero_match:%.2f%%, not_match:%.2f%%"
+          % (perfect_match * 100.0 / len(word_alphabet), case_match * 100.0 / len(word_alphabet),
+             digits_replaced_with_zeros_found * 100.0 / len(word_alphabet),
+             lowercase_and_digits_replaced_with_zeros_found * 100.0 / len(word_alphabet),
+             not_match * 100.0 / len(word_alphabet)))
 
     return pretrain_emb, embedd_dim

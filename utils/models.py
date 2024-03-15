@@ -31,11 +31,10 @@ class WordRep(nn.Module):
         self.embed_drop = nn.Dropout(p=args.dropout)
 
         self.conv_dict = {1: [self.feature_size, args.num_filter_maps],
-                     2: [self.feature_size, 100, args.num_filter_maps],
-                     3: [self.feature_size, 150, 100, args.num_filter_maps],
-                     4: [self.feature_size, 200, 150, 100, args.num_filter_maps]
-                     }
-
+                          2: [self.feature_size, 100, args.num_filter_maps],
+                          3: [self.feature_size, 150, 100, args.num_filter_maps],
+                          4: [self.feature_size, 200, 150, 100, args.num_filter_maps]
+                          }
 
     def forward(self, x):
         features = [self.embed(x)]
@@ -50,6 +49,7 @@ class RandomlyInitializedDecoder(nn.Module):
     """
     The original per-label attention network: query matrix is randomly initialized
     """
+
     def __init__(self, args, Y, dicts, input_size):
         super(RandomlyInitializedDecoder, self).__init__()
 
@@ -58,12 +58,10 @@ class RandomlyInitializedDecoder(nn.Module):
         self.U = nn.Linear(input_size, Y)
         xavier_uniform(self.U.weight)
 
-
         self.final = nn.Linear(input_size, Y)
         xavier_uniform(self.final.weight)
 
         self.loss_function = nn.BCEWithLogitsLoss()
-
 
     def forward(self, x, target, text_inputs):
         # attention
@@ -75,7 +73,7 @@ class RandomlyInitializedDecoder(nn.Module):
 
         loss = self.loss_function(y, target)
         return y, loss, alpha, m
-    
+
     def change_depth(self, depth=0):
         # placeholder
         pass
@@ -85,6 +83,7 @@ class RACDecoder(nn.Module):
     """
     The decoder proposed by Kim et al. (Code title-guided attention)
     """
+
     def __init__(self, args, Y, dicts, input_size):
         super(RACDecoder, self).__init__()
 
@@ -105,7 +104,7 @@ class RACDecoder(nn.Module):
         xavier_uniform(self.final.weight)
 
         self.loss_function = nn.BCEWithLogitsLoss()
-    
+
     def forward(self, x, target, text_inputs):
         code_title = self.word_rep(self._buffers['c2title']).transpose(1, 2)
         # attention
@@ -166,6 +165,7 @@ class Decoder(nn.Module):
     """
     Decoder: knowledge transfer initialization and hyperbolic embedding correction
     """
+
     def __init__(self, args, Y, dicts, input_size):
         super(Decoder, self).__init__()
 
@@ -178,8 +178,8 @@ class Decoder(nn.Module):
             self.decoder_dict[str(i) + '_' + '1'] = nn.Linear(input_size, y)
             xavier_uniform(self.decoder_dict[str(i) + '_' + '0'].weight)
             xavier_uniform(self.decoder_dict[str(i) + '_' + '1'].weight)
-        
-        self.use_hyperbolic =  args.decoder.find("Hyperbolic") != -1
+
+        self.use_hyperbolic = args.decoder.find("Hyperbolic") != -1
         if self.use_hyperbolic:
             self.cat_hyperbolic = args.cat_hyperbolic
             if not self.cat_hyperbolic:
@@ -190,14 +190,15 @@ class Decoder(nn.Module):
                 self.query_fc_dict = nn.ModuleDict()
                 for i in range(len(Y)):
                     self.query_fc_dict[str(i)] = nn.Linear(input_size + args.hyperbolic_dim, input_size)
-            
+
             # build hyperbolic embedding matrix
             self.hyperbolic_emb_dict = {}
             for i in range(len(Y)):
                 self.hyperbolic_emb_dict[i] = np.zeros((Y[i], args.hyperbolic_dim))
                 for idx, code in dicts['ind2c'][i].items():
                     self.hyperbolic_emb_dict[i][idx, :] = np.copy(dicts['poincare_embeddings'].get_vector(code))
-                self.register_buffer(name='hb_emb_' + str(i), tensor=torch.tensor(self.hyperbolic_emb_dict[i], dtype=torch.float32))
+                self.register_buffer(name='hb_emb_' + str(i),
+                                     tensor=torch.tensor(self.hyperbolic_emb_dict[i], dtype=torch.float32))
 
         self.cur_depth = 5 - args.depth
         self.is_init = False
@@ -213,7 +214,7 @@ class Decoder(nn.Module):
             asl_config = [float(c) for c in args.asl_config.split(',')]
             self.loss_function = AsymmetricLossOptimized(gamma_neg=asl_config[0], gamma_pos=asl_config[1],
                                                          clip=asl_config[2], reduction=args.asl_reduction)
-    
+
     def change_depth(self, depth=0):
         if self.is_init:
             # copy previous attention weights to current attention network based on ICD hierarchy
@@ -224,21 +225,27 @@ class Decoder(nn.Module):
                 tree = hierarchy_dist[depth][code]
                 pre_idx = c2ind[depth - 1][tree[depth - 1]]
 
-                self.decoder_dict[str(depth) + '_' + '0'].weight.data[i, :] = self.decoder_dict[str(depth - 1) + '_' + '0'].weight.data[pre_idx, :].clone()
-                self.decoder_dict[str(depth) + '_' + '1'].weight.data[i, :] = self.decoder_dict[str(depth - 1) + '_' + '1'].weight.data[pre_idx, :].clone()
+                self.decoder_dict[str(depth) + '_' + '0'].weight.data[i, :] = self.decoder_dict[
+                                                                                  str(depth - 1) + '_' + '0'].weight.data[
+                                                                              pre_idx, :].clone()
+                self.decoder_dict[str(depth) + '_' + '1'].weight.data[i, :] = self.decoder_dict[
+                                                                                  str(depth - 1) + '_' + '1'].weight.data[
+                                                                              pre_idx, :].clone()
 
         if not self.is_init:
             self.is_init = True
 
         self.cur_depth = depth
-        
+
     def forward(self, x, target, text_inputs):
         # attention
         if self.use_hyperbolic:
             if not self.cat_hyperbolic:
-                query = self.decoder_dict[str(self.cur_depth) + '_' + '0'].weight + self.hyperbolic_fc_dict[str(self.cur_depth)](self._buffers['hb_emb_' + str(self.cur_depth)])
+                query = self.decoder_dict[str(self.cur_depth) + '_' + '0'].weight + self.hyperbolic_fc_dict[
+                    str(self.cur_depth)](self._buffers['hb_emb_' + str(self.cur_depth)])
             else:
-                query = torch.cat([self.decoder_dict[str(self.cur_depth) + '_' + '0'].weight, self._buffers['hb_emb_' + str(self.cur_depth)]], dim=1)
+                query = torch.cat([self.decoder_dict[str(self.cur_depth) + '_' + '0'].weight,
+                                   self._buffers['hb_emb_' + str(self.cur_depth)]], dim=1)
                 query = self.query_fc_dict[str(self.cur_depth)](query)
         else:
             query = self.decoder_dict[str(self.cur_depth) + '_' + '0'].weight
@@ -246,10 +253,11 @@ class Decoder(nn.Module):
         alpha = F.softmax(query.matmul(x.transpose(1, 2)), dim=2)
         m = alpha.matmul(x)
 
-        y = self.decoder_dict[str(self.cur_depth) + '_' + '1'].weight.mul(m).sum(dim=2).add(self.decoder_dict[str(self.cur_depth) + '_' + '1'].bias)
+        y = self.decoder_dict[str(self.cur_depth) + '_' + '1'].weight.mul(m).sum(dim=2).add(
+            self.decoder_dict[str(self.cur_depth) + '_' + '1'].bias)
 
         loss = self.loss_function(y, target)
-        
+
         return y, loss, alpha, m
 
 
@@ -257,19 +265,21 @@ class ResidualBlock(nn.Module):
     def __init__(self, inchannel, outchannel, kernel_size, stride, use_res, dropout):
         super(ResidualBlock, self).__init__()
         self.left = nn.Sequential(
-            nn.Conv1d(inchannel, outchannel, kernel_size=kernel_size, stride=stride, padding=int(floor(kernel_size / 2)), bias=False),
+            nn.Conv1d(inchannel, outchannel, kernel_size=kernel_size, stride=stride,
+                      padding=int(floor(kernel_size / 2)), bias=False),
             nn.BatchNorm1d(outchannel),
             nn.Tanh(),
-            nn.Conv1d(outchannel, outchannel, kernel_size=kernel_size, stride=1, padding=int(floor(kernel_size / 2)), bias=False),
+            nn.Conv1d(outchannel, outchannel, kernel_size=kernel_size, stride=1, padding=int(floor(kernel_size / 2)),
+                      bias=False),
             nn.BatchNorm1d(outchannel)
         )
 
         self.use_res = use_res
         if self.use_res:
             self.shortcut = nn.Sequential(
-                        nn.Conv1d(inchannel, outchannel, kernel_size=1, stride=stride, bias=False),
-                        nn.BatchNorm1d(outchannel)
-                    )
+                nn.Conv1d(inchannel, outchannel, kernel_size=1, stride=stride, bias=False),
+                nn.BatchNorm1d(outchannel)
+            )
 
         self.dropout = nn.Dropout(p=dropout)
 
@@ -320,7 +330,6 @@ class MultiResCNN(nn.Module):
 
         self.cur_depth = 5 - args.depth
 
-
     def forward(self, x, target, text_inputs):
         x = self.word_rep(x)
 
@@ -346,8 +355,11 @@ class MultiResCNN(nn.Module):
         for p in self.word_rep.embed.parameters():
             p.requires_grad = False
 
+
 import os
 from transformers import LongformerModel, LongformerConfig
+
+
 class LongformerClassifier(nn.Module):
 
     def __init__(self, args, Y, dicts):
@@ -394,12 +406,11 @@ class LongformerClassifier(nn.Module):
 
         # decoder
         self.decoder = Decoder(args, Y, dicts, self.config.hidden_size)
-        
 
     def forward(self, input_ids, token_type_ids, attention_mask, target):
         global_attention_mask = torch.zeros_like(input_ids)
-            # global attention on cls token
-            # global_attention_mask[:, 0] = 1 # this line should be commented if using decoder
+        # global attention on cls token
+        # global_attention_mask[:, 0] = 1 # this line should be commented if using decoder
         longformer_output = self.longformer(
             input_ids=input_ids,
             token_type_ids=token_type_ids,
@@ -427,16 +438,16 @@ class RACReader(nn.Module):
         self.conv = nn.ModuleList()
         for i in range(args.reader_conv_num):
             conv = nn.Conv1d(self.word_rep.feature_size, self.word_rep.feature_size, kernel_size=filter_size,
-                                padding=int(floor(filter_size / 2)))
+                             padding=int(floor(filter_size / 2)))
             xavier_uniform(conv.weight)
-            self.conv.add_module(f'conv_{i+1}', conv)
-        
+            self.conv.add_module(f'conv_{i + 1}', conv)
+
         self.dropout = nn.Dropout(p=args.dropout)
 
         self.trans = nn.ModuleList()
         for i in range(args.reader_trans_num):
             trans = nn.TransformerEncoderLayer(self.word_rep.feature_size, 1, args.trans_ff_dim, args.dropout, "relu")
-            self.trans.add_module(f'trans_{i+1}', trans)
+            self.trans.add_module(f'trans_{i + 1}', trans)
 
         if args.decoder == "HierarchicalHyperbolic" or args.decoder == "Hierarchical":
             self.decoder = Decoder(args, Y, dicts, self.word_rep.feature_size)
@@ -446,7 +457,7 @@ class RACReader(nn.Module):
             self.decoder = RACDecoder(args, Y, dicts, self.word_rep.feature_size)
         else:
             raise RuntimeError("wrong decoder name")
-    
+
     def forward(self, x, target, text_inputs=None):
         x = self.word_rep(x)
 
@@ -460,19 +471,21 @@ class RACReader(nn.Module):
 
         for trans in self.trans:
             x = trans(x)
-        
+
         x = x.permute(1, 0, 2)
-        
+
         y, loss, alpha, m = self.decoder(x, target, text_inputs)
 
         return y, loss, alpha, m
-    
+
     def freeze_net(self):
         for p in self.word_rep.embed.parameters():
             p.requires_grad = False
 
 
 from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
+
+
 class LAAT(nn.Module):
     def __init__(self, args, Y, dicts):
         super(LAAT, self).__init__()
@@ -510,8 +523,6 @@ class LAAT(nn.Module):
         else:
             raise RuntimeError("wrong decoder name")
 
-        
-
         self.cur_depth = 5 - args.depth
 
     def forward(self, x, target, text_inputs):
@@ -532,7 +543,7 @@ class LAAT(nn.Module):
 
 def pick_model(args, dicts):
     ind2c = dicts['ind2c']
-    Y = [len(ind2c[i]) for i in range(5)] # total number of ICD codes
+    Y = [len(ind2c[i]) for i in range(5)]  # total number of ICD codes
     if args.model == 'MultiResCNN':
         model = MultiResCNN(args, Y, dicts)
     elif args.model == 'longformer':
@@ -550,9 +561,9 @@ def pick_model(args, dicts):
         model.load_state_dict(sd)
     if args.tune_wordemb == False:
         model.freeze_net()
-    if len(args.gpu_list) == 1 and args.gpu_list[0] != -1: # single card training
+    if len(args.gpu_list) == 1 and args.gpu_list[0] != -1:  # single card training
         model.cuda()
-    elif len(args.gpu_list) > 1: # multi-card training
+    elif len(args.gpu_list) > 1:  # multi-card training
         model = nn.DataParallel(model, device_ids=args.gpu_list)
         model = model.to(f'cuda:{model.device_ids[0]}')
     return model

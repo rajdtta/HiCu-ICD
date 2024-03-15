@@ -1,4 +1,3 @@
-
 import torch
 import numpy as np
 from utils.utils import all_metrics, print_metrics
@@ -18,11 +17,11 @@ def train(args, model, optimizer, scheduler, epoch, gpu, data_loader, cur_depth)
             inputs_id, segments, masks, labels = next(data_iter)
 
             inputs_id, segments, masks, labels = torch.LongTensor(inputs_id), torch.LongTensor(segments), \
-                                                 torch.LongTensor(masks), torch.FloatTensor(labels[cur_depth])
+                torch.LongTensor(masks), torch.FloatTensor(labels[cur_depth])
 
             if gpu[0] >= 0:
                 inputs_id, segments, masks, labels = inputs_id.cuda(), segments.cuda(), \
-                                                     masks.cuda(), labels.cuda()
+                    masks.cuda(), labels.cuda()
 
             output, loss, _, _ = model(inputs_id, segments, masks, labels)
         else:
@@ -48,8 +47,8 @@ def train(args, model, optimizer, scheduler, epoch, gpu, data_loader, cur_depth)
 
     return losses
 
-def test(args, model, data_path, fold, gpu, dicts, data_loader, cur_depth=4):
 
+def test(args, model, data_path, fold, gpu, dicts, data_loader, cur_depth=4):
     filename = data_path.replace('train', fold)
     print('file for evaluation: %s' % filename)
 
@@ -67,7 +66,7 @@ def test(args, model, data_path, fold, gpu, dicts, data_loader, cur_depth=4):
                 inputs_id, segments, masks, labels = next(data_iter)
 
                 inputs_id, segments, masks, labels = torch.LongTensor(inputs_id), torch.LongTensor(segments), \
-                                                     torch.LongTensor(masks), torch.FloatTensor(labels[cur_depth])
+                    torch.LongTensor(masks), torch.FloatTensor(labels[cur_depth])
 
                 if gpu[0] >= 0:
                     inputs_id, segments, masks, labels = inputs_id.cuda(), segments.cuda(), masks.cuda(), labels.cuda()

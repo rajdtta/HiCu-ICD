@@ -26,7 +26,6 @@ from utils.options import args
 from utils.models import pick_model
 from utils.train_test import train, test
 
-
 if __name__ == "__main__":
     # logging.basicConfig(level=logging.INFO)
     os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
@@ -41,8 +40,8 @@ if __name__ == "__main__":
 
     maxInt = sys.maxsize
     while True:
-    # decrease the maxInt value by factor 10 
-    # as long as the OverflowError occurs.
+        # decrease the maxInt value by factor 10
+        # as long as the OverflowError occurs.
         try:
             csv.field_size_limit(maxInt)
             break
@@ -51,7 +50,7 @@ if __name__ == "__main__":
 
     # load vocab and other lookups
     print("loading lookups...")
-    dicts = load_lookups(args) # load lookup table for tokens and icd codes
+    dicts = load_lookups(args)  # load lookup table for tokens and icd codes
 
     if args.decoder.find("CodeTitle") != -1:
         dicts['c2title'] = prepare_code_title(dicts, args, args.num_code_title_tokens)
@@ -64,12 +63,12 @@ if __name__ == "__main__":
         for k, v in hierarchy[4].items():
             relations.add(('root', v[0]))
             for i in range(4):
-                relations.add(tuple(v[i:i+2]))
+                relations.add(tuple(v[i:i + 2]))
         relations = list(relations)
         poincare = PoincareModel(relations, args.hyperbolic_dim, negative=10)
         poincare.train(epochs=50)
         dicts['poincare_embeddings'] = poincare.kv
-    
+
     if args.decoder == "CodeTitle" or args.decoder == "RandomlyInitialized" or args.decoder == "LAATDecoder":
         args.depth = 1
 
@@ -89,11 +88,11 @@ if __name__ == "__main__":
     train_instances = prepare_instance_func(dicts, args.data_path, args, args.MAX_LENGTH)
     print("train_instances {}".format(len(train_instances)))
     if args.version != 'mimic2':
-        dev_instances = prepare_instance_func(dicts, args.data_path.replace('train','dev'), args, args.MAX_LENGTH)
+        dev_instances = prepare_instance_func(dicts, args.data_path.replace('train', 'dev'), args, args.MAX_LENGTH)
         print("dev_instances {}".format(len(dev_instances)))
     else:
         dev_instances = None
-    test_instances = prepare_instance_func(dicts, args.data_path.replace('train','test'), args, args.MAX_LENGTH)
+    test_instances = prepare_instance_func(dicts, args.data_path.replace('train', 'test'), args, args.MAX_LENGTH)
     print("test_instances {}".format(len(test_instances)))
 
     if args.model.find("longformer") != -1:
@@ -101,17 +100,20 @@ if __name__ == "__main__":
     else:
         collate_func = my_collate
 
-    train_loader = DataLoader(MyDataset(train_instances), args.batch_size, shuffle=True, collate_fn=collate_func, num_workers=args.num_workers, pin_memory=True)
+    train_loader = DataLoader(MyDataset(train_instances), args.batch_size, shuffle=True, collate_fn=collate_func,
+                              num_workers=args.num_workers, pin_memory=True)
     if args.version != 'mimic2':
-        dev_loader = DataLoader(MyDataset(dev_instances), 1, shuffle=False, collate_fn=collate_func, num_workers=args.num_workers, pin_memory=True)
+        dev_loader = DataLoader(MyDataset(dev_instances), 1, shuffle=False, collate_fn=collate_func,
+                                num_workers=args.num_workers, pin_memory=True)
     else:
         dev_loader = None
-    test_loader = DataLoader(MyDataset(test_instances), 1, shuffle=False, collate_fn=collate_func, num_workers=args.num_workers, pin_memory=True)
+    test_loader = DataLoader(MyDataset(test_instances), 1, shuffle=False, collate_fn=collate_func,
+                             num_workers=args.num_workers, pin_memory=True)
 
     scheduler = None
     if args.model.find("LAAT") != -1 and not args.test_model:
         scheduler = optim.lr_scheduler.ExponentialLR(optimizer, gamma=args.scheduler)
-    
+
     if not args.test_model and args.model.find("longformer") != -1:
         param_optimizer = list(model.named_parameters())
         no_decay = ['bias', 'LayerNorm.weight']
@@ -144,7 +146,8 @@ if __name__ == "__main__":
                     model.decoder.change_depth(cur_depth)
         for epoch in range(epochs[cur_depth]):
             if epoch == 0 and cur_depth == start_depth and not args.test_model:
-                model_dir = os.path.join(args.MODEL_DIR, '_'.join([args.model, args.decoder, time.strftime('%b_%d_%H_%M_%S', time.localtime())]))
+                model_dir = os.path.join(args.MODEL_DIR, '_'.join(
+                    [args.model, args.decoder, time.strftime('%b_%d_%H_%M_%S', time.localtime())]))
                 os.makedirs(model_dir)
             elif args.test_model:
                 model_dir = os.path.dirname(os.path.abspath(args.test_model))
@@ -194,7 +197,7 @@ if __name__ == "__main__":
 
             if args.criterion in metrics_hist.keys():
                 if early_stop(metrics_hist, args.criterion, args.patience):
-                    #stop training, do tests on test and train sets, and then stop the script
+                    # stop training, do tests on test and train sets, and then stop the script
                     print("%s hasn't improved in %d epochs, early stopping..." % (args.criterion, args.patience))
                     break_loop = True
                     args.test_model = '%s/model_best_%s.pth' % (model_dir, args.criterion)
@@ -207,6 +210,7 @@ if __name__ == "__main__":
                 if early_stop(metrics_hist, args.criterion, args.scheduler_patience):
                     scheduler.step()
                     for param_group in optimizer.param_groups:
-                        print(f"{args.criterion} hasn't improved in {args.scheduler_patience} epochs, reduce learning rate to {param_group['lr']}")
+                        print(
+                            f"{args.criterion} hasn't improved in {args.scheduler_patience} epochs, reduce learning rate to {param_group['lr']}")
 
         cur_depth += 1
