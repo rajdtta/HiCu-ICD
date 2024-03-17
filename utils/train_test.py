@@ -1,10 +1,11 @@
 import torch
 import numpy as np
+from datetime import datetime
 from utils.utils import all_metrics, print_metrics
 
 
 def train(args, model, optimizer, scheduler, epoch, gpu, data_loader, cur_depth):
-    print("EPOCH %d" % epoch)
+    print(f"EPOCH {epoch} {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     losses = []
     model.train()
 
@@ -20,8 +21,12 @@ def train(args, model, optimizer, scheduler, epoch, gpu, data_loader, cur_depth)
                 torch.LongTensor(masks), torch.FloatTensor(labels[cur_depth])
 
             if gpu[0] >= 0:
-                inputs_id, segments, masks, labels = inputs_id.cuda(), segments.cuda(), \
-                    masks.cuda(), labels.cuda()
+                if torch.backends.mps.is_available():
+                    inputs_id, segments, masks, labels = inputs_id.to(torch.device('mps')), segments.to(torch.device('mps')), \
+                        masks.to(torch.device('mps')), labels.to(torch.device('mps'))
+                else:
+                    inputs_id, segments, masks, labels = inputs_id.cuda(), segments.cuda(), \
+                        masks.cuda(), labels.cuda()
 
             output, loss, _, _ = model(inputs_id, segments, masks, labels)
         else:
@@ -30,7 +35,10 @@ def train(args, model, optimizer, scheduler, epoch, gpu, data_loader, cur_depth)
             inputs_id, labels = torch.LongTensor(inputs_id), torch.FloatTensor(labels[cur_depth])
 
             if gpu[0] >= 0:
-                inputs_id, labels, text_inputs = inputs_id.cuda(), labels.cuda(), text_inputs.cuda()
+                if torch.backends.mps.is_available():
+                    inputs_id, labels, text_inputs = inputs_id.to(torch.device('mps')), labels.to(torch.device('mps')), text_inputs.to(torch.device('mps'))
+                else:
+                    inputs_id, labels, text_inputs = inputs_id.cuda(), labels.cuda(), text_inputs.cuda()
 
             output, loss, _, _ = model(inputs_id, labels, text_inputs)
 
@@ -69,7 +77,11 @@ def test(args, model, data_path, fold, gpu, dicts, data_loader, cur_depth=4):
                     torch.LongTensor(masks), torch.FloatTensor(labels[cur_depth])
 
                 if gpu[0] >= 0:
-                    inputs_id, segments, masks, labels = inputs_id.cuda(), segments.cuda(), masks.cuda(), labels.cuda()
+                    if torch.backends.mps.is_available():
+                        inputs_id, segments, masks, labels = inputs_id.to(torch.device('mps')), segments.to(torch.device('mps')), \
+                            masks.to(torch.device('mps')), labels.to(torch.device('mps'))
+                    else:
+                        inputs_id, segments, masks, labels = inputs_id.cuda(), segments.cuda(), masks.cuda(), labels.cuda()
 
                 output, loss, _, _ = model(inputs_id, segments, masks, labels)
             else:
@@ -79,7 +91,10 @@ def test(args, model, data_path, fold, gpu, dicts, data_loader, cur_depth=4):
                 inputs_id, labels, = torch.LongTensor(inputs_id), torch.FloatTensor(labels[cur_depth])
 
                 if gpu[0] >= 0:
-                    inputs_id, labels, text_inputs = inputs_id.cuda(), labels.cuda(), text_inputs.cuda()
+                    if torch.backends.mps.is_available():
+                        inputs_id, labels, text_inputs = inputs_id.to(torch.device('mps')), labels.to(torch.device('mps')), text_inputs.to(torch.device('mps'))
+                    else:
+                        inputs_id, labels, text_inputs = inputs_id.cuda(), labels.cuda(), text_inputs.cuda()
 
                 output, loss, _, _ = model(inputs_id, labels, text_inputs)
 
