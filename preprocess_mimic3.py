@@ -8,7 +8,7 @@ from utils.utils import build_vocab, word_embeddings, fasttext_embeddings, gensi
     reformat, write_discharge_summaries, concat_data, split_data
 
 Y = 'full'
-notes_file = '%s/NOTEEVENTS.csv' % args.MIMIC_3_DIR
+sampled_notes_file = '%s/NOTEEVENTS_SAMPLED.csv' % args.MIMIC_3_DIR
 
 # step 1: process code-related files
 dfproc = pd.read_csv('%s/PROCEDURES_ICD.csv' % args.MIMIC_3_DIR)
@@ -28,8 +28,7 @@ print("unique ICD9 code: {}".format(len(df['ICD9_CODE'].unique())))
 
 # step 2: process notes
 min_sentence_len = 3
-disch_full_file = write_discharge_summaries("%s/disch_full.csv" % args.MIMIC_3_DIR, min_sentence_len,
-                                            '%s/NOTEEVENTS.csv' % (args.MIMIC_3_DIR))
+disch_full_file = write_discharge_summaries("%s/disch_full.csv" % args.MIMIC_3_DIR, min_sentence_len, sampled_notes_file)
 
 df = pd.read_csv('%s/disch_full.csv' % args.MIMIC_3_DIR)
 

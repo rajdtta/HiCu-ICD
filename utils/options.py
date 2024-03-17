@@ -2,6 +2,11 @@ import argparse
 import sys
 
 parser = argparse.ArgumentParser()
+
+# Preprocessing / Subsets
+parser.add_argument('--ratio', type=float, default=0.1)
+
+# Training / Eval
 parser.add_argument('--MODEL_DIR', type=str, default='./models')
 parser.add_argument('--DATA_DIR', type=str, default='./data')
 parser.add_argument('--MIMIC_3_DIR', type=str, default='./data/mimic3')
