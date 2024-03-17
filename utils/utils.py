@@ -497,9 +497,7 @@ def load_lookups(args):
                 codes.add(row[0])
         hierarchy_dist, ind2c = generate_code_hierarchy(codes)
 
-    # c2ind = {i: {c: j for j, c in ind2c[i].items()} for i in range(5)}
-    # @RAJ NOTE - Replaced the line above with the line below
-    c2ind = {i: {c: j for j, c in enumerate(ind2c[i])} for i in range(5)}
+    c2ind = {i: {c: j for j, c in ind2c[i].items()} for i in range(5)}
 
     dicts = {'ind2w': ind2w, 'w2ind': w2ind, 'ind2c': ind2c, 'c2ind': c2ind, 'hierarchy_dist': hierarchy_dist}
 

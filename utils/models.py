@@ -562,7 +562,12 @@ def pick_model(args, dicts):
     if args.tune_wordemb == False:
         model.freeze_net()
     if len(args.gpu_list) == 1 and args.gpu_list[0] != -1:  # single card training
-        model.cuda()
+        if torch.backends.mps.is_available():
+            # Use MPS to train the model if available
+            model = model.to(torch.device('mps'))
+        else:
+            # Otherwise, use CUDA
+            model.cuda()
     elif len(args.gpu_list) > 1:  # multi-card training
         model = nn.DataParallel(model, device_ids=args.gpu_list)
         model = model.to(f'cuda:{model.device_ids[0]}')
