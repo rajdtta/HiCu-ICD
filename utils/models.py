@@ -569,6 +569,11 @@ def pick_model(args, dicts):
             # Otherwise, use CUDA
             model.cuda()
     elif len(args.gpu_list) > 1:  # multi-card training
-        model = nn.DataParallel(model, device_ids=args.gpu_list)
-        model = model.to(f'cuda:{model.device_ids[0]}')
+        if torch.backends.mps.is_available():
+            # Use MPS to train the model if available
+            model = nn.DataParallel(model, device_ids=args.gpu_list)
+            model = model.to(torch.device('mps'))
+        else:
+            model = nn.DataParallel(model, device_ids=args.gpu_list)
+            model = model.to(f'cuda:{model.device_ids[0]}')
     return model

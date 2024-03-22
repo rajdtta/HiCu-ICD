@@ -1,4 +1,4 @@
-python main.py \
+python3 main.py \
     --MODEL_DIR /Users/rajdatta/Documents/UIUC/598_Proj.nosync/models \
     --DATA_DIR /Users/rajdatta/Documents/UIUC/598_Proj.nosync/data \
     --MIMIC_3_DIR /Users/rajdatta/Documents/UIUC/598_Proj.nosync/data/mimic3 \

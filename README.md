@@ -40,8 +40,10 @@ The `*_hadm_ids.csv` files can be found [here](https://github.com/jamesmullenbac
 
 After setting up the files, run the following command to preprocess the data:
 ```sh
-python preprocess_mimic3.py
+python preprocess_mimic3.py --ratio <SAMPLE_RATIO>
 ```
+
+> The `--ratio` flag is used to sample a subset of the data for faster training. The default value is 0.1 (10% of the data).
 
 Training
 -----

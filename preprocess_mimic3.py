@@ -8,7 +8,31 @@ from utils.utils import build_vocab, word_embeddings, fasttext_embeddings, gensi
     reformat, write_discharge_summaries, concat_data, split_data
 
 Y = 'full'
+
+original_notes_file = '%s/NOTEEVENTS.csv' % args.MIMIC_3_DIR
 sampled_notes_file = '%s/NOTEEVENTS_SAMPLED.csv' % args.MIMIC_3_DIR
+
+# step 0: sample data
+ratio = args.ratio
+
+print(f'Sampling {ratio * 100}% of notes from {original_notes_file} and saving to {sampled_notes_file}')
+original_df = pd.read_csv(original_notes_file, dtype={
+    'ROW_ID': str,
+    'SUBJECT_ID': str,
+    'HADM_ID': str,
+    'CHARTDATE': str,
+    'CHARTTIME': str,
+    'STORETIME': str,
+    'CATEGORY': str,
+    'DESCRIPTION': str,
+    'CGID': str,
+    'ISERROR': str,
+    'TEXT': str
+})
+
+sampled_df = original_df.sample(frac=ratio)
+
+sampled_df.to_csv(sampled_notes_file, index=False)
 
 # step 1: process code-related files
 dfproc = pd.read_csv('%s/PROCEDURES_ICD.csv' % args.MIMIC_3_DIR)
