@@ -10,6 +10,12 @@ the number of models to be trained for the purposes of our project.
 You can access the CoLab notebook for the project
 using [the following link](https://colab.research.google.com/drive/1Qvs9qVqJqd3foCv2zEM-S8XpE1oOX01b?usp=sharing).
 
+TODO
+-----
+
+- [ ] Separate instructions from running locally vs. running on CoLab.
+  - [ ] Add instructions for running locally.
+
 Instructions
 -----
 
