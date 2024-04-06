@@ -136,4 +136,4 @@ dmypy.json
 
 data/
 
-proj-data.zip
+*.zip

@@ -1,10 +1,10 @@
-python3 main.py
-    --MODEL_DIR /Users/rajdatta/Documents/UIUC/598_Proj.nosync/models \
-    --DATA_DIR /Users/rajdatta/Documents/UIUC/598_Proj.nosync/data \
-    --MIMIC_3_DIR /Users/rajdatta/Documents/UIUC/598_Proj.nosync/data/mimic3 \
-    --data_path /Users/rajdatta/Documents/UIUC/598_Proj.nosync/data/mimic3/train_full.csv \
-    --embed_file /Users/rajdatta/Documents/UIUC/598_Proj.nosync/data/mimic3/processed_full_100.embed \
-    --vocab /Users/rajdatta/Documents/UIUC/598_Proj.nosync/data/mimic3/vocab.csv \
+python3 main.py \
+    --MODEL_DIR /content/models \
+    --DATA_DIR /content/data \
+    --MIMIC_3_DIR /content/data/mimic3 \
+    --data_path /content/data/mimic3/train_full.csv \
+    --embed_file /content/data/mimic3/processed_full_100.embed \
+    --vocab /content/data/mimic3/vocab.csv \
     --Y full \
     --model MultiResCNN \
     --decoder RandomlyInitialized \
@@ -13,3 +13,5 @@ python3 main.py
     --batch_size 8  \
     --lr 5e-5 \
     --num_workers 8 \
+    --depth 5 \
+    --n_epochs '2,3,5,10,50'  \
