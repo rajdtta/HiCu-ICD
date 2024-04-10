@@ -1,10 +1,10 @@
-python3 main.py \
-    --MODEL_DIR /content/models \
-    --DATA_DIR /content/data \
-    --MIMIC_3_DIR /content/data/mimic3 \
-    --data_path /content/data/mimic3/train_full.csv \
-    --embed_file /content/data/mimic3/processed_full_100.embed \
-    --vocab /content/data/mimic3/vocab.csv \
+python main.py \
+    --MODEL_DIR ./models \
+    --DATA_DIR ./data \
+    --MIMIC_3_DIR ./data/mimic3 \
+    --data_path ./data/mimic3/train_full.csv \
+    --embed_file ./data/mimic3/processed_full_100.embed \
+    --vocab ./data/mimic3/vocab.csv \
     --Y full \
     --model MultiResCNN \
     --decoder HierarchicalHyperbolic \

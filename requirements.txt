@@ -1,3 +1,4 @@
+jupyter
 gensim==4.3.2
 nltk==3.8.1
 numpy==1.26.4
