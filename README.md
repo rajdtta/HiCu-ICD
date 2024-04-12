@@ -37,7 +37,7 @@ the number of models to be trained for the purposes of our project.
 3. Install the required packages using the following command:
 
     ```bash
-   # Python v3.11.7 is recommended
+    # Python v3.11.7 is recommended
     pip install -r requirements.txt
     ```
 
